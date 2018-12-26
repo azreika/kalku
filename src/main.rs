@@ -10,6 +10,8 @@ fn run_tests() {
     test_program(&String::from("1-2"));
     test_program(&String::from("1*2"));
     test_program(&String::from("      1    + 2 "));
+    test_program(&String::from("10 + 17"));
+    test_program(&String::from("10 / 17"));
 }
 
 fn test_program(program: &str) {

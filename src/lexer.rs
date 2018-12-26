@@ -9,14 +9,14 @@ pub enum Operator {
 
 #[derive(Debug)]
 pub enum Token<'a> {
-    Operator(Operator),
+    Op(Operator),
     Number(i32),
     Error(&'a str),
 }
 
 pub struct Lexer<'a> {
     program: &'a str,
-    program_iter: Chars<'a>,
+    it: Chars<'a>,
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -27,17 +27,33 @@ impl<'a> Iterator for Lexer<'a> {
     fn next(&mut self) -> Option<Token<'a>> {
         // TODO: is this clone bad? for peeking...
         // TODO: better way to write this?
-        while let Some(chr) = self.program_iter.clone().next() {
+        while let Some(chr) = self.it.clone().next() {
             if chr.is_whitespace() {
-                self.program_iter.next();
+                self.it.next();
             } else {
                 break;
             }
         }
 
-        match self.program_iter.next() {
+        match self.it.next() {
+            Some('+') => Some(Token::Op(Operator::Plus)),
+            Some('-') => Some(Token::Op(Operator::Minus)),
+            Some('*') => Some(Token::Op(Operator::Multiply)),
+            Some(x) if x.is_numeric() => {
+                let mut next_num = String::from("");
+                next_num.push(x);
+                while let Some(chr) = self.it.clone().next() {
+                    if chr.is_numeric() {
+                        next_num.push(chr);
+                        self.it.next();
+                    } else {
+                        break;
+                    }
+                }
+                Some(Token::Number(next_num.parse().unwrap()))
+            },
             None => None,
-            _ => Some(Token::Error("not implemented")),
+            _ => Some(Token::Error("unexpected character")),
         }
     }
 }
@@ -46,7 +62,11 @@ impl<'a> Lexer<'a> {
     pub fn new(program: &str) -> Lexer {
         Lexer {
             program: program,
-            program_iter: program.chars(),
+            it: program.chars(),
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.it = self.program.chars();
     }
 }
