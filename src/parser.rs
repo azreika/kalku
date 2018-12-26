@@ -45,40 +45,89 @@ impl<'a> Parser<'a> {
 
     // TODO: why is a lifetime parameter needed on the RHS here?
     fn parseExpression(&mut self) -> AstNode {
-        // TODO: probably dont veen need peek!
-        let left = match self.lexer.next() {
-            Some(Token::LeftBracket) => {
-                // parse the first part
-                let currExpr = self.parseExpression();
+        let term = self.parseTerm();
+        match self.lexer.next() {
+            Some(tok) => {
+                match tok {
+                    // TODO: always plus or minus
+                    Token::Op(op) => {
+                        let lhs = term;
+                        let rhs = self.parseExpression();
+                        AstNode {
+                            node_type: AstNodeType::BinaryOperation(op, Box::new(lhs), Box::new(rhs)),
+                        }
+                    },
 
-                //TODO: ERROR HANDLING!!!! this should be a right bracket
-                self.lexer.next();
+                    Token::RightBracket => term,
 
-                // TODO: do the remaining rhs if possible
-                currExpr
-            },
-            Some(Token::Number(value)) => {
-                AstNode {
-                    node_type: AstNodeType::Constant(value),
+                    // TODO: ERROR HANDLING!!!
+                    _ => AstNode {
+                        node_type: AstNodeType::Constant(0),
+                    },
                 }
             },
-            // TODO: SHOULD ERROR out on Error, Op, or RightBracket
-            _ => AstNode {
-                // TODO: write this up
-                node_type: AstNodeType::Constant(0)
-            }
-        };
+            None => term,
+        }
+    }
 
-        let middle = self.lexer.next();
-        let op: Operator;
-        match middle {
-            Some(Token::Op(x)) => op = x,
-            _ => return left,
+    fn parseTerm(&mut self) -> AstNode {
+        let factor = self.parseFactor();
+
+        match self.lexer.peek() {
+            Some(Token::Op(op)) => {
+                if op != Operator::Plus && op != Operator::Minus {
+                    return factor;
+                }
+            },
+            _ => return factor,
         }
 
-        let right = self.parseExpression();
-        AstNode {
-            node_type: AstNodeType::BinaryOperation(op, Box::new(left), Box::new(right)),
+        match self.lexer.next() {
+            Some(tok) => {
+                match tok {
+                    Token::Op(op) => {
+                        let lhs = factor;
+                        let rhs = self.parseTerm();
+                        AstNode {
+                            node_type: AstNodeType::BinaryOperation(op, Box::new(lhs), Box::new(rhs)),
+                        }
+                    }
+
+                    // TODO: ERROR HANDLING
+                    x => {
+                        println!("TERM ERROR [FOR {:?}]! GOT BACK {:?}", factor, x);
+                        AstNode {
+                            node_type: AstNodeType::Constant(0),
+                        }
+                    },
+                }
+            },
+            None => factor,
+        }
+    }
+
+    fn parseFactor(&mut self) -> AstNode {
+        match self.lexer.next() {
+            Some(Token::LeftBracket) => {
+                let result = self.parseExpression();
+                // TODO: should be a right bracket!!
+                self.lexer.next();
+                result
+            },
+
+            Some (Token::Number(val)) => {
+                AstNode {
+                    node_type: AstNodeType::Constant(val),
+                }
+            },
+
+            // TODO: error handling!
+            x => {
+                println!("FACTOR ERROR! GOT BACK {:?}", x);
+                AstNode {
+                    node_type: AstNodeType::Constant(0),
+                }
+            },
         }
     }
 }

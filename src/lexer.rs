@@ -1,6 +1,6 @@
 use std::str::Chars;
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum Operator {
     Plus,
     Minus,
@@ -16,6 +16,7 @@ pub enum Token<'a> {
     Error(&'a str),
 }
 
+#[derive(Debug)]
 pub struct Lexer<'a> {
     program: &'a str,
     it: Chars<'a>,
@@ -71,11 +72,15 @@ impl<'a> Lexer<'a> {
     }
 
     // TODO: implemnet this properly
-    pub fn peek(&mut self) -> Option<Token> {
-        let backup = self.it.clone();
-        let result = self.next();
-        self.it = backup;
-        result
+    pub fn peek(&self) -> Option<Token> {
+        self.clone().next()
+    }
+
+    pub fn clone(&self) -> Lexer {
+        Lexer {
+            program: self.program,
+            it: self.it.clone(),
+        }
     }
 
     pub fn reset(&mut self) {
