@@ -46,6 +46,16 @@ impl<'a> Parser<'a> {
     // TODO: why is a lifetime parameter needed on the RHS here?
     fn parseExpression(&mut self) -> AstNode {
         let term = self.parseTerm();
+
+        match self.lexer.peek() {
+            Some(Token::Op(op)) => {
+                if op != Operator::Plus && op != Operator::Minus {
+                    return term;
+                }
+            },
+            _ => return term,
+        }
+
         match self.lexer.next() {
             Some(tok) => {
                 match tok {
@@ -75,7 +85,7 @@ impl<'a> Parser<'a> {
 
         match self.lexer.peek() {
             Some(Token::Op(op)) => {
-                if op != Operator::Plus && op != Operator::Minus {
+                if op != Operator::Multiply {
                     return factor;
                 }
             },

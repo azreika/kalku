@@ -17,6 +17,7 @@ fn run_tests() {
     // test_program(&String::from("10 / 17"), Err("NULL"));
     test_program(&String::from("(1+2)"), Ok(3));
     test_program(&String::from("1*2 + 3"), Ok(5));
+    test_program(&String::from("1*(2+3) + 3"), Ok(8));
 }
 
 fn test_program(program: &str, expected: Result<i32,String>) {
