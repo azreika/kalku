@@ -17,21 +17,26 @@ pub struct Lexer<'a> {
     idx: usize,
 }
 
+impl<'a> Iterator for Lexer<'a> {
+    // TODO: look into these lifetime parameters
+    type Item = Token<'a>;
+
+    // TODO: why no 'a on the mut on the lhs?
+    fn next(&mut self) -> Option<Token<'a>> {
+        if self.idx >= self.program.len() {
+            return None;
+        }
+
+        self.idx += 1;
+        Some(Token::Error("not implemented"))
+    }
+}
+
 impl<'a> Lexer<'a> {
     pub fn new(program: &str) -> Lexer {
         Lexer {
             program: program,
             idx: 0,
         }
-    }
-
-    // TODO: implement as an iterator?
-    pub fn next(&mut self) -> Token {
-        self.idx += 1;
-        Token::Error("not implemented")
-    }
-
-    pub fn has_next(&self) -> bool {
-        self.idx < self.program.len()
     }
 }

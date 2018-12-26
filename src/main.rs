@@ -9,12 +9,13 @@ fn run_tests() {
     test_program(&String::from("1+2"));
     test_program(&String::from("1-2"));
     test_program(&String::from("1*2"));
+    test_program(&String::from("      1    + 2 "));
 }
 
 fn test_program(program: &str) {
     println!("Testing program: [{}]", program);
     let mut lexer = lexer::Lexer::new(&program);
-    while lexer.has_next() {
-        println!("TOKEN: {:?}", lexer.next());
+    while let Some(token) = lexer.next() {
+        println!("TOKEN: {:?}", token);
     }
 }
