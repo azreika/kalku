@@ -11,6 +11,8 @@ pub enum Operator {
 pub enum Token<'a> {
     Op(Operator),
     Number(i32),
+    LeftBracket,
+    RightBracket,
     Error(&'a str),
 }
 
@@ -39,6 +41,8 @@ impl<'a> Iterator for Lexer<'a> {
             Some('+') => Some(Token::Op(Operator::Plus)),
             Some('-') => Some(Token::Op(Operator::Minus)),
             Some('*') => Some(Token::Op(Operator::Multiply)),
+            Some('(') => Some(Token::LeftBracket),
+            Some(')') => Some(Token::RightBracket),
             Some(x) if x.is_numeric() => {
                 let mut next_num = String::from("");
                 next_num.push(x);
@@ -64,6 +68,14 @@ impl<'a> Lexer<'a> {
             program: program,
             it: program.chars(),
         }
+    }
+
+    // TODO: implemnet this properly
+    pub fn peek(&mut self) -> Option<Token> {
+        let backup = self.it.clone();
+        let result = self.next();
+        self.it = backup;
+        result
     }
 
     pub fn reset(&mut self) {
