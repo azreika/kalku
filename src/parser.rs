@@ -45,75 +45,81 @@ impl<'a> Parser<'a> {
 
     // TODO: why is a lifetime parameter needed on the RHS here?
     fn parseExpression(&mut self) -> AstNode {
-        let term = self.parseTerm();
+        let mut expr = self.parseTerm();
 
-        match self.lexer.peek() {
-            Some(Token::Op(op)) => {
-                if op != Operator::Plus && op != Operator::Minus {
-                    return term;
-                }
-            },
-            _ => return term,
-        }
+        loop {
+            match self.lexer.peek() {
+                Some(Token::Op(op)) => {
+                    if op != Operator::Plus && op != Operator::Minus {
+                        break;
+                    }
+                },
+                _ => break,
+            };
 
-        match self.lexer.next() {
-            Some(tok) => {
-                match tok {
-                    // TODO: always plus or minus
-                    Token::Op(op) => {
-                        let lhs = term;
-                        let rhs = self.parseExpression();
-                        AstNode {
-                            node_type: AstNodeType::BinaryOperation(op, Box::new(lhs), Box::new(rhs)),
+            expr = match self.lexer.next() {
+                Some(tok) => {
+                    match tok {
+                        Token::Op(op) => {
+                            AstNode {
+                                node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(self.parseTerm())),
+                            }
                         }
-                    },
 
-                    Token::RightBracket => term,
+                        // TODO: ERROR HANDLING!!!
+                        _ => AstNode {
+                            node_type: AstNodeType::Constant(0),
+                        },
+                    }
+                },
 
-                    // TODO: ERROR HANDLING!!!
-                    _ => AstNode {
-                        node_type: AstNodeType::Constant(0),
-                    },
-                }
-            },
-            None => term,
+                // TODO: ERROR HANDLING!!!
+                _ => AstNode {
+                    node_type: AstNodeType::Constant(0),
+                },
+            };
         }
+
+        expr
     }
 
     fn parseTerm(&mut self) -> AstNode {
-        let factor = self.parseFactor();
+        let mut term = self.parseFactor();
 
-        match self.lexer.peek() {
-            Some(Token::Op(op)) => {
-                if op != Operator::Multiply {
-                    return factor;
-                }
-            },
-            _ => return factor,
-        }
-
-        match self.lexer.next() {
-            Some(tok) => {
-                match tok {
-                    Token::Op(op) => {
-                        let lhs = factor;
-                        let rhs = self.parseTerm();
-                        AstNode {
-                            node_type: AstNodeType::BinaryOperation(op, Box::new(lhs), Box::new(rhs)),
-                        }
+        loop {
+            match self.lexer.peek() {
+                Some(Token::Op(op)) => {
+                    if op != Operator::Multiply {
+                        break;
                     }
+                },
+                _ => break,
+            };
 
-                    // TODO: ERROR HANDLING
-                    x => {
-                        println!("TERM ERROR [FOR {:?}]! GOT BACK {:?}", factor, x);
-                        AstNode {
-                            node_type: AstNodeType::Constant(0),
+            term = match self.lexer.next() {
+                Some(tok) => {
+                    match tok {
+                        Token::Op(op) => {
+                            AstNode {
+                                node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(self.parseFactor())),
+                            }
                         }
-                    },
-                }
-            },
-            None => factor,
+
+                        // TODO: ERROR HANDLING!!!
+                        _ => AstNode {
+                            node_type: AstNodeType::Constant(0),
+                        },
+                    }
+                },
+
+                // TODO: ERROR HANDLING!!!
+                _ => AstNode {
+                    node_type: AstNodeType::Constant(0),
+                },
+            };
         }
+
+        term
     }
 
     fn parseFactor(&mut self) -> AstNode {

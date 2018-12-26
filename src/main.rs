@@ -8,7 +8,8 @@ fn main() {
 fn run_tests() {
     test_program(&String::from("1"), Ok(1));
     test_program(&String::from("(1)"), Ok(1));
-    test_program(&String::from("1+2"), Ok(3));
+    test_program(&String::from("2+1"), Ok(3));
+    test_program(&String::from("1+2+3"), Ok(6));
     test_program(&String::from("1-2"), Ok(-1));
     test_program(&String::from("1*2"), Ok(2));
     test_program(&String::from("      1    + 2 "), Ok(3));
@@ -18,6 +19,7 @@ fn run_tests() {
     test_program(&String::from("(1+2)"), Ok(3));
     test_program(&String::from("1*2 + 3"), Ok(5));
     test_program(&String::from("1*(2+3) + 3"), Ok(8));
+    test_program(&String::from("1 +2 - 3 + (4 + 5) - 3"), Ok(6));
 }
 
 fn test_program(program: &str, expected: Result<i32,String>) {
