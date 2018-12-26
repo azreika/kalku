@@ -17,8 +17,17 @@ fn run_tests() {
 
 fn test_program(program: &str) {
     println!("Testing program: [{}]", program);
+
+    // test lexing
+    println!("--- lexer ---");
     let mut lexer = lexer::Lexer::new(&program);
     while let Some(token) = lexer.next() {
         println!("TOKEN: {:?}", token);
     }
+
+    // test parsing
+    println!("--- parser ---");
+    let mut parser = parser::Parser::new(&program);
+    let result = parser.parse();
+    println!("{:?}", result);
 }
