@@ -31,4 +31,8 @@ fn test_program(program: &str) {
     let mut parser = parser::Parser::new(&program);
     let result = parser.parse();
     println!("{:?}", result);
+
+    // test evaluation
+    println!("--- eval ---");
+    println!("{}", result.evaluate());
 }

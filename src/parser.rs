@@ -6,6 +6,7 @@ pub struct Parser<'a> {
 
 #[derive(Debug)]
 pub enum AstNodeType {
+    // TODO: is Box the way to go?
     BinaryOperation(Operator, Box<AstNode>, Box<AstNode>),
     Constant(i32),
 }
@@ -13,6 +14,22 @@ pub enum AstNodeType {
 #[derive(Debug)]
 pub struct AstNode {
     node_type: AstNodeType,
+}
+
+impl AstNode {
+    pub fn evaluate(&self) -> i32 {
+        match self.node_type {
+            // TODO: point of these refs? what do they mean?
+            AstNodeType::BinaryOperation(ref op, ref left, ref right) => {
+                match op {
+                    Operator::Plus => left.evaluate() + right.evaluate(),
+                    Operator::Minus => left.evaluate() - right.evaluate(),
+                    Operator::Multiply => left.evaluate() * right.evaluate(),
+                }
+            },
+            AstNodeType::Constant(value) => value,
+        }
+    }
 }
 
 impl<'a> Parser<'a> {
