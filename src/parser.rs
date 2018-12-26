@@ -1,4 +1,5 @@
 use lexer::{self,Operator,Token};
+use std::fmt;
 
 pub struct Parser<'a> {
     lexer: lexer::Lexer<'a>,
@@ -14,6 +15,24 @@ pub enum AstNodeType {
 #[derive(Debug)]
 pub struct AstNode {
     node_type: AstNodeType,
+}
+
+impl fmt::Display for AstNode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.node_type {
+            AstNodeType::BinaryOperation(ref op, ref left, ref right) => {
+                let op = match op {
+                    Operator::Plus => "+",
+                    Operator::Minus => "-",
+                    Operator::Multiply => "*",
+                };
+
+                write!(f, "({} {} {})", left, op, right)
+            },
+
+            AstNodeType::Constant(ref val) => write!(f, "{}", val),
+        }
+    }
 }
 
 impl AstNode {

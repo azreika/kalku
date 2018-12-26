@@ -36,7 +36,7 @@ fn test_program(program: &str, expected: Result<i32,String>) {
     println!("--- parser ---");
     let mut parser = parser::Parser::new(&program);
     let result = parser.parse();
-    println!("{:?}", result);
+    println!("{}", result);
 
     // test evaluation
     println!("--- eval ---");
