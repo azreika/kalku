@@ -35,13 +35,14 @@ fn test_program(program: &str, expected: Result<i32,String>) {
     // test parsing
     println!("--- parser ---");
     let mut parser = parser::Parser::new(&program);
-    let result = parser.parse();
+    let result = parser.parse().unwrap();
     println!("{}", result);
 
     // test evaluation
     println!("--- eval ---");
-    println!("{}", result.evaluate());
+    let evalled = result.evaluate();
+    println!("{}", evalled);
 
     // TODO: FIX THIS ERROR CHECK
-    assert_eq!(result.evaluate(), expected.unwrap());
+    assert_eq!(evalled, expected.unwrap());
 }

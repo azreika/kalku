@@ -7,9 +7,16 @@ pub struct Parser<'a> {
 
 #[derive(Debug)]
 pub enum AstNodeType {
-    // TODO: is Box the way to go?
+    // TODO: is Box the way to go.unwrap()
     BinaryOperation(Operator, Box<AstNode>, Box<AstNode>),
     Constant(i32),
+}
+
+#[derive(Debug)]
+pub enum ParseError<'a> {
+    ExpectedToken(Token<'a>),
+    UnexpectedToken(Token<'a>),
+    UnexpectedEOF,
 }
 
 #[derive(Debug)]
@@ -51,6 +58,9 @@ impl AstNode {
     }
 }
 
+// TODO: ERROR HANDLING!!! GEt rid of the unwraps!!! for some reason get the immutable problem
+// though when it is removed
+
 impl<'a> Parser<'a> {
     pub fn new(program: &str) -> Parser {
         Parser {
@@ -58,111 +68,96 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> AstNode {
+    pub fn parse(&mut self) -> Result<AstNode,ParseError> {
         self.parseExpression()
     }
 
     // TODO: why is a lifetime parameter needed on the RHS here?
-    fn parseExpression(&mut self) -> AstNode {
-        let mut expr = self.parseTerm();
+    fn parseExpression(&mut self) -> Result<AstNode,ParseError> {
+        let mut expr = self.parseTerm().unwrap();
 
         loop {
             match self.lexer.peek() {
                 Some(Token::Op(op)) => {
                     if op != Operator::Plus && op != Operator::Minus {
-                        break;
+                        break Ok(expr)
                     }
                 },
-                _ => break,
+                _ => break Ok(expr),
             };
 
             expr = match self.lexer.next() {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
+                            let rhs = self.parseTerm().unwrap();
                             AstNode {
-                                node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(self.parseTerm())),
+                                node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)),
                             }
                         }
 
                         // TODO: ERROR HANDLING!!!
-                        _ => AstNode {
-                            node_type: AstNodeType::Constant(0),
-                        },
+                        _ => break Err(ParseError::UnexpectedToken(tok)),
                     }
                 },
 
                 // TODO: ERROR HANDLING!!!
-                _ => AstNode {
-                    node_type: AstNodeType::Constant(0),
-                },
+                _ => break Err(ParseError::UnexpectedEOF),
             };
         }
-
-        expr
     }
 
-    fn parseTerm(&mut self) -> AstNode {
-        let mut term = self.parseFactor();
+    fn parseTerm(&mut self) -> Result<AstNode,ParseError> {
+        let mut term = self.parseFactor().unwrap();
 
         loop {
             match self.lexer.peek() {
+                // TODO: better way to write this.unwrap()
                 Some(Token::Op(op)) => {
                     if op != Operator::Multiply {
-                        break;
+                        break Ok(term)
                     }
                 },
-                _ => break,
+                _ => break Ok(term),
             };
 
             term = match self.lexer.next() {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
+                            let rhs = self.parseFactor().unwrap();
                             AstNode {
-                                node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(self.parseFactor())),
+                                node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)),
                             }
-                        }
-
-                        // TODO: ERROR HANDLING!!!
-                        _ => AstNode {
-                            node_type: AstNodeType::Constant(0),
                         },
+
+                        _ => break Err(ParseError::UnexpectedToken(tok)),
                     }
                 },
 
-                // TODO: ERROR HANDLING!!!
-                _ => AstNode {
-                    node_type: AstNodeType::Constant(0),
-                },
+                _ => break Err(ParseError::UnexpectedEOF),
             };
         }
-
-        term
     }
 
-    fn parseFactor(&mut self) -> AstNode {
+    fn parseFactor(&mut self) -> Result<AstNode,ParseError> {
         match self.lexer.next() {
             Some(Token::LeftBracket) => {
-                let result = self.parseExpression();
-                // TODO: should be a right bracket!!
-                self.lexer.next();
-                result
+                let result = self.parseExpression().unwrap();
+                // final token should be a right bracket
+                match self.lexer.next() {
+                    Some(Token::RightBracket) => Ok(result),
+                    // TODO: clean up error handling
+                    _ => Err(ParseError::ExpectedToken(Token::RightBracket)),
+                }
             },
-
             Some (Token::Number(val)) => {
-                AstNode {
+                Ok(AstNode {
                     node_type: AstNodeType::Constant(val),
-                }
+                })
             },
-
-            // TODO: error handling!
-            x => {
-                println!("FACTOR ERROR! GOT BACK {:?}", x);
-                AstNode {
-                    node_type: AstNodeType::Constant(0),
-                }
-            },
+            Some(tok) => Err(ParseError::UnexpectedToken(tok)),
+            None => Err(ParseError::UnexpectedEOF),
         }
     }
 }
