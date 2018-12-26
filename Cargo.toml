@@ -1,0 +1,6 @@
+[package]
+name = "kalku"
+version = "0.1.0"
+authors = ["Abdul Zreika <azre6702@uni.sydney.edu.au>"]
+
+[dependencies]
