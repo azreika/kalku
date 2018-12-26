@@ -69,12 +69,12 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<AstNode,ParseError> {
-        self.parseExpression()
+        self.parse_expression()
     }
 
     // TODO: why is a lifetime parameter needed on the RHS here?
-    fn parseExpression(&mut self) -> Result<AstNode,ParseError> {
-        let mut expr = self.parseTerm().unwrap();
+    fn parse_expression(&mut self) -> Result<AstNode,ParseError> {
+        let mut expr = self.parse_term().unwrap();
 
         loop {
             match self.lexer.peek() {
@@ -90,7 +90,7 @@ impl<'a> Parser<'a> {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
-                            let rhs = self.parseTerm().unwrap();
+                            let rhs = self.parse_term().unwrap();
                             AstNode {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)),
                             }
@@ -107,8 +107,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parseTerm(&mut self) -> Result<AstNode,ParseError> {
-        let mut term = self.parseFactor().unwrap();
+    fn parse_term(&mut self) -> Result<AstNode,ParseError> {
+        let mut term = self.parse_factor().unwrap();
 
         loop {
             match self.lexer.peek() {
@@ -125,7 +125,7 @@ impl<'a> Parser<'a> {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
-                            let rhs = self.parseFactor().unwrap();
+                            let rhs = self.parse_factor().unwrap();
                             AstNode {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)),
                             }
@@ -140,10 +140,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parseFactor(&mut self) -> Result<AstNode,ParseError> {
+    fn parse_factor(&mut self) -> Result<AstNode,ParseError> {
         match self.lexer.next() {
             Some(Token::LeftBracket) => {
-                let result = self.parseExpression().unwrap();
+                let result = self.parse_expression().unwrap();
                 // final token should be a right bracket
                 match self.lexer.next() {
                     Some(Token::RightBracket) => Ok(result),

@@ -3,6 +3,8 @@ mod parser;
 
 fn main() {
     run_tests();
+
+    // TODO: add driver here
 }
 
 fn run_tests() {
@@ -20,6 +22,7 @@ fn run_tests() {
     test_program(&String::from("1*2 + 3"), Ok(5));
     test_program(&String::from("1*(2+3) + 3"), Ok(8));
     test_program(&String::from("1 +2 - 3 + (4 + 5) - 3"), Ok(6));
+    // test_program(&String::from("11/7"), Ok(11));
 }
 
 fn test_program(program: &str, expected: Result<i32,String>) {
