@@ -5,6 +5,8 @@ pub struct Parser<'a> {
     lexer: lexer::Lexer<'a>,
 }
 
+// TODO: documentation/commenting
+
 #[derive(Debug)]
 pub enum AstNodeType {
     // TODO: is Box the way to go?
@@ -44,6 +46,12 @@ impl fmt::Display for AstNode {
 }
 
 impl AstNode {
+    pub fn new(t: AstNodeType) -> AstNode {
+        AstNode {
+            node_type: t,
+        }
+    }
+
     pub fn evaluate(&self) -> i32 {
         match self.node_type {
             // TODO: point of these refs? what do they mean?
@@ -80,6 +88,7 @@ impl<'a> Parser<'a> {
         let mut expr = self.parse_term()?;
 
         loop {
+            // TODO: maybe pull out into a function?
             match self.lexer.peek() {
                 Some(Token::Op(op)) => {
                     if op != Operator::Plus && op != Operator::Minus {
@@ -94,9 +103,7 @@ impl<'a> Parser<'a> {
                     match tok {
                         Token::Op(op) => {
                             let rhs = self.parse_term()?;
-                            AstNode {
-                                node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)),
-                            }
+                            AstNode::new(AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)))
                         }
                         _ => break Err(ParseError::GeneralError),
                     }
@@ -111,10 +118,7 @@ impl<'a> Parser<'a> {
             if op == Operator::Minus {
                 self.lexer.next();
                 let inner_term = self.parse_term()?;
-                let term = AstNode {
-                    node_type: AstNodeType::Negation(Box::new(inner_term)),
-                };
-                return Ok(term);
+                return Ok(AstNode::new(AstNodeType::Negation(Box::new(inner_term))));
             }
         }
 
@@ -136,9 +140,7 @@ impl<'a> Parser<'a> {
                     match tok {
                         Token::Op(op) => {
                             let rhs = self.parse_factor()?;
-                            AstNode {
-                                node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)),
-                            }
+                            AstNode::new(AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)))
                         },
                         _ => break Err(ParseError::GeneralError),
                     }
@@ -158,9 +160,7 @@ impl<'a> Parser<'a> {
                     _ => Err(ParseError::GeneralError),
                 }
             },
-            Some (Token::Number(val)) => Ok(AstNode {
-                    node_type: AstNodeType::Constant(val),
-            }),
+            Some (Token::Number(val)) => Ok(AstNode::new(AstNodeType::Constant(val))),
             _ => Err(ParseError::GeneralError),
         }
     }
