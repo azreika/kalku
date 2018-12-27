@@ -2,50 +2,49 @@ mod lexer;
 mod parser;
 
 fn main() {
-    run_tests();
-
     // TODO: add driver here
 }
 
-fn run_tests() {
-    test_program(&String::from("1"), Ok(1));
-    test_program(&String::from("(1)"), Ok(1));
-    test_program(&String::from("2+1"), Ok(3));
-    test_program(&String::from("1+2+3"), Ok(6));
-    test_program(&String::from("1-2"), Ok(-1));
-    test_program(&String::from("1*2"), Ok(2));
-    test_program(&String::from("      1    + 2 "), Ok(3));
-    test_program(&String::from("10 + 17"), Ok(27));
-    // TODO: Fix error handling
-    // test_program(&String::from("10 / 17"), Err("NULL"));
-    test_program(&String::from("(1+2)"), Ok(3));
-    test_program(&String::from("1*2 + 3"), Ok(5));
-    test_program(&String::from("1*(2+3) + 3"), Ok(8));
-    test_program(&String::from("1 +2 - 3 + (4 + 5) - 3"), Ok(6));
-    // test_program(&String::from("11/7"), Ok(11));
-}
+#[cfg(test)]
+mod tests {
+    use super::parser::{self,ParseError};
 
-fn test_program(program: &str, expected: Result<i32,String>) {
-    println!("Testing program: [{}]", program);
-
-    // test lexing
-    println!("--- lexer ---");
-    let mut lexer = lexer::Lexer::new(&program);
-    while let Some(token) = lexer.next() {
-        println!("TOKEN: {:?}", token);
+    fn test_evaluate(program: &str) -> Result<i32,ParseError> {
+        let mut parser = parser::Parser::new(&program);
+        let ast = parser.parse()?;
+        Ok(ast.evaluate())
     }
 
-    // test parsing
-    println!("--- parser ---");
-    let mut parser = parser::Parser::new(&program);
-    let result = parser.parse().unwrap();
-    println!("{}", result);
+    fn expect_failure(program: &str, err: ParseError) {
+        let result = test_evaluate(program).err().unwrap();
+        assert_eq!(result, err);
+    }
 
-    // test evaluation
-    println!("--- eval ---");
-    let evalled = result.evaluate();
-    println!("{}", evalled);
+    fn expect_success(program: &str, value: i32) {
+        let result = test_evaluate(program).unwrap();
+        assert_eq!(result, value);
+    }
 
-    // TODO: FIX THIS ERROR CHECK
-    assert_eq!(evalled, expected.unwrap());
+    #[test]
+    fn simple_correct() {
+        expect_success("1", 1);
+        expect_success("1+2", 3);
+        expect_success("2+1", 3);
+        expect_success("1+2+3", 6);
+        expect_success("1-2", -1);
+        expect_success("1*2", 2);
+        expect_success("      1    + 2 ", 3);
+        expect_success(" 10 + 17 ", 27);
+        expect_success(" ( 1 + 2 ) ", 3);
+        expect_success(" 1*2 + 3 ", 5);
+        expect_success(" 1*(2+3) + 3 ", 8);
+        expect_success("1 +2 - 3 + (4 + 5) - 3", 6);
+    }
+
+    #[test]
+    fn simple_incorrect() {
+        expect_failure("1/7", ParseError::GeneralError);
+        expect_failure("1+", ParseError::GeneralError);
+        expect_failure("(1", ParseError::GeneralError);
+    }
 }

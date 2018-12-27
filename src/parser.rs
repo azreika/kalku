@@ -12,13 +12,10 @@ pub enum AstNodeType {
     Constant(i32),
 }
 
-#[derive(Debug)]
-// TODO: add tokens here!!! BUT THEN get that weird borrow error
+#[derive(Debug,PartialEq)]
+// TODO: add tokens here!!! BUT THEN get that weird borrow error -- or maybe just strings?
 pub enum ParseError {
-    ExpectedToken,
-    ExpectedEOF,
-    UnexpectedToken,
-    UnexpectedEOF,
+    GeneralError,
 }
 
 #[derive(Debug)]
@@ -74,7 +71,7 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
         match self.lexer.peek() {
             None => Ok(expr),
-            _ => Err(ParseError::ExpectedEOF),
+            _ => Err(ParseError::GeneralError),
         }
     }
 
@@ -103,12 +100,12 @@ impl<'a> Parser<'a> {
                         }
 
                         // TODO: ERROR HANDLING!!!
-                        _ => break Err(ParseError::UnexpectedToken),
+                        _ => break Err(ParseError::GeneralError),
                     }
                 },
 
                 // TODO: ERROR HANDLING!!!
-                _ => break Err(ParseError::UnexpectedEOF),
+                _ => break Err(ParseError::GeneralError),
             };
         }
     }
@@ -137,11 +134,11 @@ impl<'a> Parser<'a> {
                             }
                         },
 
-                        _ => break Err(ParseError::UnexpectedToken),
+                        _ => break Err(ParseError::GeneralError),
                     }
                 },
 
-                _ => break Err(ParseError::UnexpectedEOF),
+                _ => break Err(ParseError::GeneralError),
             };
         }
     }
@@ -154,7 +151,7 @@ impl<'a> Parser<'a> {
                 match self.lexer.next() {
                     Some(Token::RightBracket) => Ok(result),
                     // TODO: clean up error handling
-                    _ => Err(ParseError::ExpectedToken),
+                    _ => Err(ParseError::GeneralError),
                 }
             },
             Some (Token::Number(val)) => {
@@ -162,8 +159,8 @@ impl<'a> Parser<'a> {
                     node_type: AstNodeType::Constant(val),
                 })
             },
-            Some(tok) => Err(ParseError::UnexpectedToken),
-            None => Err(ParseError::UnexpectedEOF),
+            Some(tok) => Err(ParseError::GeneralError),
+            None => Err(ParseError::GeneralError),
         }
     }
 }
