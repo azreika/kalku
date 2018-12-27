@@ -57,7 +57,9 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 Some(Token::Number(next_num.parse().unwrap()))
             },
+            // TODO: EOF token?
             None => None,
+            // TODO: actual error or token?
             _ => Some(Token::Error("unexpected character")),
         }
     }
@@ -83,6 +85,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn reset(&mut self) {
         self.it = self.program.chars();
     }

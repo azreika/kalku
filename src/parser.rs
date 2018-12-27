@@ -14,10 +14,12 @@ pub enum AstNodeType {
 
 #[derive(Debug,PartialEq)]
 // TODO: add tokens here!!! BUT THEN get that weird borrow error -- or maybe just strings?
+// TODO: expand these errors so we get actual error messages
 pub enum ParseError {
     GeneralError,
 }
 
+// TODO: add a function that creates a node for you
 #[derive(Debug)]
 pub struct AstNode {
     node_type: AstNodeType,
@@ -57,9 +59,6 @@ impl AstNode {
     }
 }
 
-// TODO: ERROR HANDLING!!! GEt rid of the unwraps!!! for some reason get the immutable problem
-// though when it is removed
-
 impl<'a> Parser<'a> {
     pub fn new(program: &str) -> Parser {
         Parser {
@@ -98,13 +97,9 @@ impl<'a> Parser<'a> {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)),
                             }
                         }
-
-                        // TODO: ERROR HANDLING!!!
                         _ => break Err(ParseError::GeneralError),
                     }
                 },
-
-                // TODO: ERROR HANDLING!!!
                 _ => break Err(ParseError::GeneralError),
             };
         }
@@ -150,17 +145,13 @@ impl<'a> Parser<'a> {
                 // final token should be a right bracket
                 match self.lexer.next() {
                     Some(Token::RightBracket) => Ok(result),
-                    // TODO: clean up error handling
                     _ => Err(ParseError::GeneralError),
                 }
             },
-            Some (Token::Number(val)) => {
-                Ok(AstNode {
+            Some (Token::Number(val)) => Ok(AstNode {
                     node_type: AstNodeType::Constant(val),
-                })
-            },
-            Some(tok) => Err(ParseError::GeneralError),
-            None => Err(ParseError::GeneralError),
+            }),
+            _ => Err(ParseError::GeneralError),
         }
     }
 }
