@@ -1,8 +1,41 @@
+use std::io::{self, BufRead, Write};
+
 mod lexer;
 mod parser;
 
 fn main() {
-    // TODO: add driver here
+    let stdin = io::stdin();
+    let mut lines = stdin.lock().lines();
+
+    // start the REPL
+    loop {
+        print!("> ");
+        io::stdout().flush().expect("error flushing to stdout");
+
+        match lines.next() {
+            // read some input
+            Some(line) => {
+                match line {
+                    // program has been read in
+                    Ok(program) => {
+                        match parser::Parser::new(&program).parse() {
+                            Ok(ast) => println!("{}", ast.evaluate()),
+                            _ => println!("error: invalid input"),
+                        }
+                    },
+
+                    // IO error
+                    _ => println!("error: could not read input"),
+                }
+            },
+
+            // end of input
+            None => break,
+        }
+    }
+
+    // finished
+    println!("bye!");
 }
 
 #[cfg(test)]
