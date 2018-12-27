@@ -72,6 +72,8 @@ mod tests {
         expect_success(" 1*2 + 3 ", 5);
         expect_success(" 1*(2+3) + 3 ", 8);
         expect_success("1 +2 - 3 + (4 + 5) - 3", 6);
+        expect_success("-1-2", -3);
+        expect_success("-1 - (1+2) -- 2", -2);
     }
 
     #[test]
@@ -79,5 +81,6 @@ mod tests {
         expect_failure("1/7", ParseError::GeneralError);
         expect_failure("1+", ParseError::GeneralError);
         expect_failure("(1", ParseError::GeneralError);
+        expect_failure("-", ParseError::GeneralError);
     }
 }

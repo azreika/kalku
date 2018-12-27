@@ -22,9 +22,15 @@ Using cargo, just run:
 26
 ```
 
+```
+> -1 - (1+2) - - 2
+-2
+```
+
 ### TODO
-* negative numbers
 * integral division
 * larger number range
 * informative error messages
 * in-code documentation
+* commands (e.g. debug mode)
+* variables/assignment

@@ -9,6 +9,7 @@ pub struct Parser<'a> {
 pub enum AstNodeType {
     // TODO: is Box the way to go?
     BinaryOperation(Operator, Box<AstNode>, Box<AstNode>),
+    Negation(Box<AstNode>),
     Constant(i32),
 }
 
@@ -34,10 +35,9 @@ impl fmt::Display for AstNode {
                     Operator::Minus => "-",
                     Operator::Multiply => "*",
                 };
-
                 write!(f, "({} {} {})", left, op, right)
             },
-
+            AstNodeType::Negation(ref term) => write!(f, "(-{})", term),
             AstNodeType::Constant(ref val) => write!(f, "{}", val),
         }
     }
@@ -54,6 +54,7 @@ impl AstNode {
                     Operator::Multiply => left.evaluate() * right.evaluate(),
                 }
             },
+            AstNodeType::Negation(ref term) => -term.evaluate(),
             AstNodeType::Constant(value) => value,
         }
     }
@@ -106,6 +107,17 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_term(&mut self) -> Result<AstNode,ParseError> {
+        if let Some(Token::Op(op)) = self.lexer.peek() {
+            if op == Operator::Minus {
+                self.lexer.next();
+                let inner_term = self.parse_term()?;
+                let term = AstNode {
+                    node_type: AstNodeType::Negation(Box::new(inner_term)),
+                };
+                return Ok(term);
+            }
+        }
+
         let mut term = self.parse_factor()?;
 
         loop {
@@ -128,11 +140,9 @@ impl<'a> Parser<'a> {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)),
                             }
                         },
-
                         _ => break Err(ParseError::GeneralError),
                     }
                 },
-
                 _ => break Err(ParseError::GeneralError),
             };
         }
