@@ -7,15 +7,17 @@ pub struct Parser<'a> {
 
 #[derive(Debug)]
 pub enum AstNodeType {
-    // TODO: is Box the way to go.unwrap()
+    // TODO: is Box the way to go?
     BinaryOperation(Operator, Box<AstNode>, Box<AstNode>),
     Constant(i32),
 }
 
 #[derive(Debug)]
-pub enum ParseError<'a> {
-    ExpectedToken(Token<'a>),
-    UnexpectedToken(Token<'a>),
+// TODO: add tokens here!!! BUT THEN get that weird borrow error
+pub enum ParseError {
+    ExpectedToken,
+    ExpectedEOF,
+    UnexpectedToken,
     UnexpectedEOF,
 }
 
@@ -69,12 +71,16 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<AstNode,ParseError> {
-        self.parse_expression()
+        let expr = self.parse_expression()?;
+        match self.lexer.peek() {
+            None => Ok(expr),
+            _ => Err(ParseError::ExpectedEOF),
+        }
     }
 
     // TODO: why is a lifetime parameter needed on the RHS here?
     fn parse_expression(&mut self) -> Result<AstNode,ParseError> {
-        let mut expr = self.parse_term().unwrap();
+        let mut expr = self.parse_term()?;
 
         loop {
             match self.lexer.peek() {
@@ -90,14 +96,14 @@ impl<'a> Parser<'a> {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
-                            let rhs = self.parse_term().unwrap();
+                            let rhs = self.parse_term()?;
                             AstNode {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(expr), Box::new(rhs)),
                             }
                         }
 
                         // TODO: ERROR HANDLING!!!
-                        _ => break Err(ParseError::UnexpectedToken(tok)),
+                        _ => break Err(ParseError::UnexpectedToken),
                     }
                 },
 
@@ -108,11 +114,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_term(&mut self) -> Result<AstNode,ParseError> {
-        let mut term = self.parse_factor().unwrap();
+        let mut term = self.parse_factor()?;
 
         loop {
             match self.lexer.peek() {
-                // TODO: better way to write this.unwrap()
+                // TODO: better way to write this?
                 Some(Token::Op(op)) => {
                     if op != Operator::Multiply {
                         break Ok(term)
@@ -125,13 +131,13 @@ impl<'a> Parser<'a> {
                 Some(tok) => {
                     match tok {
                         Token::Op(op) => {
-                            let rhs = self.parse_factor().unwrap();
+                            let rhs = self.parse_factor()?;
                             AstNode {
                                 node_type: AstNodeType::BinaryOperation(op, Box::new(term), Box::new(rhs)),
                             }
                         },
 
-                        _ => break Err(ParseError::UnexpectedToken(tok)),
+                        _ => break Err(ParseError::UnexpectedToken),
                     }
                 },
 
@@ -143,12 +149,12 @@ impl<'a> Parser<'a> {
     fn parse_factor(&mut self) -> Result<AstNode,ParseError> {
         match self.lexer.next() {
             Some(Token::LeftBracket) => {
-                let result = self.parse_expression().unwrap();
+                let result = self.parse_expression()?;
                 // final token should be a right bracket
                 match self.lexer.next() {
                     Some(Token::RightBracket) => Ok(result),
                     // TODO: clean up error handling
-                    _ => Err(ParseError::ExpectedToken(Token::RightBracket)),
+                    _ => Err(ParseError::ExpectedToken),
                 }
             },
             Some (Token::Number(val)) => {
@@ -156,7 +162,7 @@ impl<'a> Parser<'a> {
                     node_type: AstNodeType::Constant(val),
                 })
             },
-            Some(tok) => Err(ParseError::UnexpectedToken(tok)),
+            Some(tok) => Err(ParseError::UnexpectedToken),
             None => Err(ParseError::UnexpectedEOF),
         }
     }
